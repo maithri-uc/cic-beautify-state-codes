@@ -27,6 +27,7 @@ class RIParseHtml(ParserBase):
         self.soup.contents[0].replace_with(Doctype("html"))
         self.soup.html.attrs['lang'] = 'en'
         file.close()
+        print('soup created')
 
     def get_class_name(self):
         for key in self.dictionary_to_store_class_name:
@@ -105,8 +106,7 @@ class RIParseHtml(ParserBase):
                 if re.search("^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?|^Chs. \d+  - \d+\.",
                              tag.text.strip()):
                     if re.search("^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?", tag.text.strip()):
-                        id_of_section = re.search("^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?",
-                                                  tag.text.strip()).group()
+                        id_of_section = re.search("^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?",tag.text.strip()).group()
                     else:
                         match = re.search("^Chs. (?P<section_id>\d+  - \d+)\.", tag.text.strip()).group('section_id')
                         id_of_section = re.sub('[^A-Za-z0-9]', '', match)
@@ -151,13 +151,13 @@ class RIParseHtml(ParserBase):
                         class_name = sub_tag.attrs['class'][0]
                         if class_name == self.dictionary_to_store_class_name['History']:
                             sub_tag.name = 'li'
+                            sub_tag['class']="notes_to_decision"
                         elif class_name == self.dictionary_to_store_class_name['h4'] and sub_tag.b and re.search(
                                 'Collateral References\.', sub_tag.text) is None:
                             sub_tag.name = "h5"
                             sub_tag_id = re.sub(r'[^a-zA-Z0-9]', '', sub_tag.text.strip()).lower()
                             if re.search('^—.*', sub_tag.text.strip()):
-                                sub_tag.attrs[
-                                    'id'] = f"{sub_tag.find_previous_sibling('h5', class_='notes_section').attrs['id']}-{sub_tag_id}"
+                                sub_tag.attrs['id'] = f"{sub_tag.find_previous_sibling('h5', class_='notes_section').attrs['id']}-{sub_tag_id}"
                             else:
                                 h5_id = f"{tag_id}-{sub_tag_id}"
                                 duplicate = self.soup.find_all("h5", id=h5_id)
@@ -185,8 +185,7 @@ class RIParseHtml(ParserBase):
                     else:
                         h4_tag.attrs['id'] = f"{h4_tag.find_previous_sibling('h3').attrs['id']}-{sub_section_id}"
                 elif re.search("^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3})", tag.text.strip(), re.IGNORECASE):
-
-                    if re.search("^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3}) [A-Z a-z]+", tag.text.strip(), re.IGNORECASE):
+                    if re.search("^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3}) [A-Z a-z]+|^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3}) [A-Za-z]+", tag.text.strip(), re.IGNORECASE):
                         tag_for_article = self.soup.new_tag("h3")
                         article_number=re.search('^(ARTICLE (?P<article_id>(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})))', tag.text.strip(), re.IGNORECASE)
                         tag_for_article.string = article_number.group()
@@ -196,6 +195,9 @@ class RIParseHtml(ParserBase):
                         tag.string = tag_text
                         tag_for_article.attrs['class'] = [self.dictionary_to_store_class_name['History']]
                         tag_for_article['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
+                    elif re.search('^Article (XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.',tag.text.strip()):
+                        tag.name = 'li'
+                        sub_tag['class'] = "notes_to_decision"
                     else:
                         tag.name = "h3"
                         article_id = re.search("^ARTICLE (?P<article_id>(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))",tag.text.strip(), re.IGNORECASE).group('article_id')
@@ -312,22 +314,6 @@ class RIParseHtml(ParserBase):
                     li_count_for_part = 0
                 else:
                     li_tag.wrap(ul_tag_for_part)
-            elif re.search('^Article (IX|IV|V?I{0,3})', li_tag.text.strip()):
-                article_id = re.search('^Article (?P<article_id>(IX|IV|V?I{0,3}))', li_tag.text.strip()).group(
-                    'article_id')
-                h2_id = li_tag.find_previous_sibling('h2').attrs['id']
-                li_count_for_article += 1
-                li_tag = self.create_li_with_anchor(li_tag, f"{h2_id}s{article_id}", "snav", li_count_for_article)
-                next_tag = li_tag.find_next_sibling()
-                ul_tag_for_article.attrs['class'] = 'leaders'
-                if next_tag.name == "h2":
-                    li_tag.wrap(ul_tag_for_article)
-                    ul_tag_for_article.wrap(nav_tag_for_article_ul)
-                    ul_tag_for_article = self.soup.new_tag("ul")
-                    nav_tag_for_article_ul = self.soup.new_tag("nav")
-                    li_count_for_article = 0
-                else:
-                    li_tag.wrap(ul_tag_for_article)
             elif re.search('^Subpart [A-Z0-9]', li_tag.text.strip()):
                 sub_part_id = re.search("^Subpart (?P<sub_part_number>[A-Z0-9])", li_tag.text.strip()).group(
                     'sub_part_number')
@@ -351,9 +337,7 @@ class RIParseHtml(ParserBase):
                 h4_id = li_tag.find_previous_sibling("h4").attrs['id']
                 sub_section_id = re.sub(r'[^a-zA-Z0-9]', '', li_tag.text.strip()).lower()
                 if re.search('^—.*', li_tag.text.strip()):
-                    id_of_parent = re.sub(r'[^a-zA-Z0-9]', '',
-                                          li_tag.find_previous_sibling().find_all("li", class_="notes_to_decision")[
-                                              -1].text).lower()
+                    id_of_parent = re.sub(r'[^a-zA-Z0-9]', '',li_tag.find_previous_sibling().find_all("li", class_="notes_to_decision")[-1].text).lower()
                     h5_id = f"{h4_id}-{id_of_parent}-{sub_section_id}"
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
                     if re.search('^—.*', li_tag.find_next_sibling().text.strip()):
@@ -496,6 +480,7 @@ class RIParseHtml(ParserBase):
                     tag.append(BeautifulSoup(tag_string, features="html.parser"))
                     tag['class'] = tag_class
         print('cited')
+
     def create_ol_tag(self):
         alphabet = 'a'
         number = 1
@@ -517,7 +502,7 @@ class RIParseHtml(ParserBase):
         count_of_p_tag = 1
         comment_count = 0
         for tag in self.soup.main.find_all("p"):
-            print(tag)
+
             if not tag.name:
                 tag.decompose()
                 continue
@@ -1065,7 +1050,7 @@ class RIParseHtml(ParserBase):
                                     next_tag = sub_tag
                                 elif re.search('^\((xc|xl|l?x{0,3})(ix|iv|v?i{0,3})\)', next_tag.text.strip()):
                                     roman_id = re.search('^\((?P<roman_id>(xc|xl|l?x{0,3})(ix|iv|v?i{0,3}))\)',next_tag.text.strip()).group('roman_id')
-                                    if roman_id != roman_number:
+                                    if roman_id != roman_number and roman_id!=alphabet:
                                         sub_tag = next_tag.find_next_sibling()
                                         p_tag = self.soup.new_tag("p")
                                         p_tag.string = next_tag.text
@@ -1406,7 +1391,7 @@ class RIParseHtml(ParserBase):
                             tag.attrs['id'] = f"{number_id}{inner_alphabet}"
                             tag['class']="inner_alpha"
                             inner_alphabet = chr(ord(inner_alphabet) + 1)
-                            while (re.search('^“?[a-z A-Z]+',next_tag.text.strip()) or (next_tag.next_element and next_tag.next_element.name == "br")) and next_tag.name!="h4":  # 5-31.1-1. after 16i 2 break
+                            while (re.search('^“?[a-z A-Z]+',next_tag.text.strip()) or (next_tag.next_element and next_tag.next_element.name == "br")) and next_tag.name!="h4" and next_tag.name!="h3":  # 5-31.1-1. after 16i 2 break
                                 if next_tag.next_element.name == "br":
                                     sub_tag = next_tag.find_next_sibling()
                                     next_tag.decompose()
@@ -1449,7 +1434,7 @@ class RIParseHtml(ParserBase):
                                 ol_tag_for_inner_number=self.soup.new_tag("ol")
                                 inner_num=1
 
-                            elif next_tag.name=="h4":
+                            elif next_tag.name=="h4" or next_tag.name=="h3":
                                 ol_tag_for_number.find_all("li", class_="number")[-1].append(ol_tag_for_inner_alphabet)
                                 ol_tag_for_inner_alphabet = self.soup.new_tag("ol", type="a")
                                 inner_alphabet = 'a'
@@ -1550,6 +1535,10 @@ class RIParseHtml(ParserBase):
                                     next_tag.decompose()
                                     next_tag = sub_tag
                             count_of_p_tag = 1
+                            if re.search(f'^\({number}\)',next_tag.text.strip()):
+                                ol_tag_for_number.find_all("li",class_="number")[-1].append(ol_tag_for_roman)
+                                ol_tag_for_roman=self.soup.new_tag("ol",type="i")
+                                roman_number="i"
                     elif re.search(f'^\({number}\) \({inner_alphabet}\)', tag.text.strip()):
                         if re.search(f'^\({number}\) \({inner_alphabet}\) \({roman_number}\)', tag.text.strip()):
                             tag.name = "li"
@@ -1798,6 +1787,7 @@ class RIParseHtml(ParserBase):
         div_tag_for_article = self.soup.new_tag("div")
         div_tag_for_part = self.soup.new_tag("div")
         for tag in self.soup.find_all("h2"):
+
             if re.search('^Chapters? \d+(\.\d+)?(\.\d+)?([A-Z])?', tag.text.strip()):
                 next_tag = tag.find_next_sibling()
                 tag.wrap(div_tag_for_chapter)
@@ -1858,8 +1848,7 @@ class RIParseHtml(ParserBase):
                                         if div_tag_for_h4.next_element:
                                             div_tag_for_section.append(div_tag_for_h4)
                                             div_tag_for_h4 = self.soup.new_tag("div")
-                                        if re.search('^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3})',
-                                                     tag_of_h4.text.strip()):
+                                        if re.search('^ARTICLE (XC|XL|L?X{0,3})(IX|IV|V?I{0,3})',tag_of_h4.text.strip()):
                                             next_tag = tag_of_h4.find_next_sibling()
                                             tag_of_h4.wrap(div_tag_for_article)
                                             tag_of_h4 = next_tag
@@ -1901,7 +1890,7 @@ class RIParseHtml(ParserBase):
                                             div_tag_for_section = self.soup.new_tag("div")
                                             next_tag = tag_of_h4.find_next_sibling()
                                             div_tag_for_section.append(tag_of_h4)
-                                            print(tag_of_h4)
+
                                             tag_of_h4 = next_tag
 
                                             if tag_of_h4.name == "p":
@@ -2054,6 +2043,7 @@ class RIParseHtml(ParserBase):
                             div_tag_for_section = self.soup.new_tag("div")
                             div_tag_for_part = self.soup.new_tag("div")
                             div_tag_for_chapter = self.soup.new_tag("div")
+        print('div tag created')
 
     def remove_class_name(self):
         for tag in self.soup.find_all():
@@ -2062,6 +2052,7 @@ class RIParseHtml(ParserBase):
             if tag.name in ["ul", "h2", "p", "li"]:
                 if tag['class'] not in ["chapter", "leaders", "transformation", "nav_li", "notes_section"]:
                     del tag['class']
+        print('class name removed')
 
     def remove_from_head(self):
         list_to_remove_from_head = ['text/css', 'LEXIS Publishing']
@@ -2072,12 +2063,14 @@ class RIParseHtml(ParserBase):
         meta_tag.decompose()
         style_tag = self.soup.find('style')
         style_tag.decompose()
+        print('meta tag and style tag removed')
 
     def adding_css_to_file(self):
         head_tag = self.soup.find("head")
         link_tag = self.soup.new_tag("link", rel="stylesheet",
                                      href="https://unicourt.github.io/cic-code-ga/transforms/ga/stylesheet/ga_code_stylesheet.css")
         head_tag.append(link_tag)
+        print('css added')
 
     def add_watermark(self):
         meta_tag = self.soup.new_tag('meta')
@@ -2089,11 +2082,13 @@ class RIParseHtml(ParserBase):
             'content'] = f"Release {self.release_number} of the Official Code of Rhode Island Annotated released 2021.11.Transformed and posted by Public.Resource.Org using rtf-parser.py version 1.0 on 2022-06-13.This document is not subject to copyright and is in the public domain."
         self.soup.head.append(meta_tag)
         self.soup.head.append(meta_tag_for_water_mark)
+        print('water mark added')
 
     def cleanup(self):
         for tag in self.soup.find_all(["p", "span"]):
             if not tag.text:
                 tag.decompose()
+        print('clean up finished')
 
     def write_to_file(self):
         soup_text = str(self.soup.prettify())
@@ -2102,6 +2097,7 @@ class RIParseHtml(ParserBase):
         with open(f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/{self.html_file}", "w") as file:
             file.write(soup_text)
         file.close()
+        print('done')
 
     def start_parse(self):
         """
