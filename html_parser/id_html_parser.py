@@ -635,9 +635,6 @@ class idParseHtml(ParserBase):
             current_tag_text = p_tag.text.strip()
             if p_tag.name == "h3":
                 num_cur_tag = None
-
-
-
             if re.search(rf'^\({ol_head}\)|^\({ol_head1}\)', current_tag_text):
                 p_tag.name = "li"
                 num_cur_tag = p_tag
