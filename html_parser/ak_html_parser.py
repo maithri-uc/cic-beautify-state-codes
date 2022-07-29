@@ -459,7 +459,6 @@ class AKParseHtml(ParserBase):
                         self.a_nav_count += 1
                         cnav = f'snav{self.a_nav_count:02}'
                         list_item_id = self.set_chapter_section_nav(list_item, chap_num.zfill(2), sub_tag, prev_id)
-
                         if list_item_id in list_item_id_dict:
                             list_item['id'] = f'{list_item_id}.{list_id_count:02}-{cnav}'
                             list_item.a['href'] = f'#{list_item_id}.{list_id_count:02}'
@@ -1031,7 +1030,7 @@ class AKParseHtml(ParserBase):
                 'head1': r'^The Constitution of the State|^CONSTITUTION OF THE UNITED STATES OF AMERICA',
                 'ul': r'^Preamble', 'head2': '^Article I',
                 'head4': '^Notes to Decisions', 'junk1': '^Text$',
-                'head3': r'^Section \d\.|^§ \d\.', 'NTD': '^Analysis'}
+                'head3': r'^Section \d\.|^§ \d\.'}
             self.generate_class_name()
             self.remove_junk()
             self.replace_tags()
