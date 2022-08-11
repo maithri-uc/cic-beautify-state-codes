@@ -2550,10 +2550,11 @@ class RIParseHtml(ParserBase):
                     'alr_pattern': '\d+ A.L.R.( Fed. )?(\d[a-z]{1,2})?( Art.)? ?\d+|\d+ A. Fed. (\d[a-z]{1,2})?( Art.)? ?\d+',
                     'pl_pattern': '(impl\. am\. )?P\.L\. \d+',
                     'gl_pattern': '(G\.L\. ?\d+)',
-                    'us_ammend': 'U\.S\. Const\., Amend\. (\d+|(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})\.)( C)?',
+                    'us_ammend': 'U\.S\. Const\.(,)? (A|a)mend\. (\d+|(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})(\.)?)( C)?',
                     'sct': '(\d+ S\. Ct\. \d+)',
                     'led': '(\d+ L\. Ed\. \d+[a-z] \d+)',
                     'ann_laws': '(Ann\. Laws ch\. \d+)',
+                    'ri_const':'R\.I\. Const\.(,)? art\. (\d+|(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))',
                     'ri': '(\d+ R\.I\. \d+)',
                     'ri_lexis': '(\d+ R\.I\. LEXIS \d+)',
                     'us': '(\d+ U\.S\. \d+)',
@@ -2570,10 +2571,10 @@ class RIParseHtml(ParserBase):
                     'A_269':'(\d+ A\. \d+)',
                     'l_ed':'(\d+ L\. Ed\. \d+)',
                     'br':'(\d+ B\.R\. \d+)',
-                    'ricr':'(230-RICR-30-10-1)'
+                    'ricr':'(230-RICR-30-10-1)',
+                    'lp':'L\.P\.( v\. Tillson)?',
+                    'econ': 'R\.I\. Econ\. Dev\. Corp\. v\. Parking Co\.'
                 }
-
-
                 for key in cite_tag_pattern:
                     cite_pattern = cite_tag_pattern[key]
                     if re.search(cite_pattern, tag.text.strip()) :
@@ -2586,9 +2587,9 @@ class RIParseHtml(ParserBase):
                     for pattern in sorted(set(match[0] for match in re.findall('(\d+[A-Z]?(\.\d+)?-\d+(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?(( ?\([a-z 0-9 A-Z ]+\) ?)+)?)',
                             tag.text.strip()))):
                         section_match = re.search("(?P<section_id>(?P<title_id>\d+[A-Z]?(\.\d+)?)-(?P<chapter_id>\d+)(-\d+)?([A-Z])?(\.\d+(-\d+)?(\.\d+)?(-\d+)?)?)",pattern)
-                        if exists(f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html"):
+                        if exists(f"../../code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html"):
                             file = open(
-                                f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html")
+                                f"../../code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html")
                             content = file.read()
                             file.close()
                         else:
@@ -2606,24 +2607,24 @@ class RIParseHtml(ParserBase):
                             if re.search(f'id=".+s{section_id}ol1{match}"', content):
                                 tag_id = re.search(f'id="(?P<tag_id>(.+s{section_id}ol1{match}))"', content).group('tag_id')
                                 if self.html_file==f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                    tag_string = re.sub(fr'{re.escape(" "+pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" "+pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                 else:
-                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
 
                         elif re.search('\d+[A-Z]?(\.\d+)?-\d+-\d+\.\d+(?!(\d+)?(\.\d+|\())', pattern):#21-28-4.07
                             if re.search(f'id=".+s{pattern}"', content):
                                 tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                 if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                    tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+)?(\.\d+|\())',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+)?(\.\d+|\())',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                 else:
-                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+)?(\.\d+|\())',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+)?(\.\d+|\())',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
                         elif re.search('\d+[A-Z]?(\.\d+)?-\d+-\d+\.\d+\.\d+', pattern):#21-28-4.07.1
                             if re.search(f'id=".+s{pattern}"', content):
                                 tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                 if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}' , f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}' , f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                 else:
-                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}' ,f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
+                                    tag_string = re.sub(fr'{re.escape(" " + pattern)}' ,f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
                         else:
                             if re.search('(?<![R])(?<!\d)(?<!\.|-)\d+[A-Z]?(\.\d+)?-\d+(?!((\d)?\.\d+)|((\d)?-\d+)|((\d)?-PP))',
                                          pattern):  # 12-32
@@ -2631,54 +2632,54 @@ class RIParseHtml(ParserBase):
                                 if re.search(f'id=".+c{chapter_id}"', content):
                                     tag_id = re.search(f'id="(?P<tag_id>(.+c{chapter_id}))"', content).group('tag_id')
                                     if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                        tag_string = re.sub(fr'{re.escape(" "+pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                        tag_string = re.sub(fr'{re.escape(" "+pattern)}',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                     else:
                                         tag_string = re.sub(fr'{re.escape(" " + pattern)}',
-                                                            f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
+                                                            f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
                                                             text)
                             else:
                                 if re.search('\d+[A-Z]?(\.\d+)?-\d+-\d(?!((\d)?\.\d+|(\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+))', pattern):
                                     if re.search(f'id=".+s{pattern}"', content):
                                         tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                         if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}' + '(?!((\d)?\.\d+)|(\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}' + '(?!((\d)?\.\d+)|(\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                         else:
                                             tag_string = re.sub(
                                                 fr'{re.escape(" " + pattern)}' + '(?!((\d)?\.\d+)|(\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',
-                                                f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
+                                                f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
                                                 text)
                                 elif re.search('\d+[A-Z]?(\.\d+)?-\d+-\d+([a-z])?(?!((\d+)?\.\d+|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+))', pattern):
                                     if re.search(f'id=".+s{pattern}"', content):
                                         tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                         if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}' + '(?!((\d)?\.\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}' + '(?!((\d)?\.\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                         else:
-                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}' + '(?!((\d)?\.\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)', f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}' + '(?!((\d)?\.\d+)|(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)', f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',text)
                                 elif re.search('\d+[A-Z]?(\.\d+)?-\d+\.\d+(\.\d+)?-\d(?!(\d+))(?!\.\d+)(?!(\([a-z 0-9 A-Z ]+\) ?)+)', pattern):
                                     if re.search(f'id=".+s{pattern}"', content):
                                         tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                         if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+))(?!\.\d+)(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+))(?!\.\d+)(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                         else:
-                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+))(?!\.\d+)(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
+                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+))(?!\.\d+)(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
                                                                 text)
 
                                 elif re.search('\d+[A-Z]?(\.\d+)?-\d+\.\d+(\.\d+)?-\d(?!(\d+))\.\d+(?!(\([a-z 0-9 A-Z ]+\) ?)+)', pattern):
                                     if re.search(f'id=".+s{pattern}"', content):
                                         tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                         if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+))(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+))(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                         else:
-                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+))(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
+                                            tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+))(?!(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
                                                                 text)
                                 elif re.search('\d+[A-Z]?(\.\d+)?-\d+\.\d+(\.\d+)?-\d+(?!(\d+))(\.\d+)?(?!(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)', pattern):#23-4.1-10
                                     if re.search(f'id=".+s{pattern}"', content):
                                         tag_id = re.search(f'id="(?P<tag_id>(.+s{pattern}))"', content).group('tag_id')
                                         if self.html_file == f"gov.ri.code.title.{section_match.group('title_id').zfill(2)}.html":
-                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
+                                            tag_string = re.sub(fr'{re.escape(" "+pattern)}'+'(?!(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_self">{pattern}</a></cite>',text)
                                         else:
                                             tag_string = re.sub(fr'{re.escape(" " + pattern)}'+'(?!(\d+)?(\([a-z 0-9 A-Z ]+\) ?)+)',
-                                                                f'<cite class="ocri"><a href=http://localhost:63342/cic-code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
+                                                                f'<cite class="ocri"><a href=http://localhost:63342/code-ri/transforms/ri/ocri/r70/gov.ri.code.title.{section_match.group("title_id").zfill(2)}.html?_ijt=g0et01fnnanfldggrlb88qoab6&_ij_reload=RELOAD_ON_SAVE#{tag_id} target="_blank">{pattern}</a></cite>',
                                                                 text)
                                 #space pattern ol id modified to cite
                         text = tag_string
@@ -2687,7 +2688,6 @@ class RIParseHtml(ParserBase):
                     tag.clear()
                     tag.append(BeautifulSoup(tag_string, features="html.parser"))
                     tag['class'] = tag_class
-
     def create_div_tag(self):
         div_tag_for_chapter = self.soup.new_tag("div")
         div_tag_for_section = self.soup.new_tag("div")
@@ -3412,7 +3412,7 @@ class RIParseHtml(ParserBase):
         soup_text = str(self.soup.prettify())
         soup_text = soup_text.replace('/>', ' />')
         soup_text = re.sub('&(!?amp;)', '&amp;', soup_text)
-        with open(f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/{self.html_file}", "w") as file:
+        with open(f"../../code-ri/transforms/ri/ocri/r{self.release_number}/{self.html_file}", "w") as file:
             file.write(soup_text)
         file.close()
 
