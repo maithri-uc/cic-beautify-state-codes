@@ -2547,34 +2547,18 @@ class RIParseHtml(ParserBase):
                 text = str(tag)
                 text = re.sub('^<p[^>]*>|</p>$|^<li[^>]*>|</li>$', '', text.strip())
                 cite_tag_pattern = {
-                    'alr_pattern': '\d+ A.L.R.( Fed. )?(\d[a-z]{1,2})?( Art.)? ?\d+|\d+ A. Fed. (\d[a-z]{1,2})?( Art.)? ?\d+',
-                    'pl_pattern': '(impl\. am\. )?P\.L\. \d+',
-                    'gl_pattern': '(G\.L\. ?\d+)',
-                    'us_ammend': 'U\.S\. Const\.(,)? (A|a)mend\. (\d+|(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})(\.)?)( C)?',
-                    'sct': '(\d+ S\. Ct\. \d+)',
-                    'led': '(\d+ L\. Ed\. \d+[a-z] \d+)',
-                    'ann_laws': '(Ann\. Laws ch\. \d+)',
-                    'ri_const':'R\.I\. Const\.(,)? art\. (\d+|(XC|XL|L?X{0,3})(IX|IV|V?I{0,3}))',
+                    'ri_const':'R\.I\. Const\. art\. (XC|XL|L?X{0,3})(IX|IV|V?I{0,3})',
                     'ri': '(\d+ R\.I\. \d+)',
                     'ri_lexis': '(\d+ R\.I\. LEXIS \d+)',
-                    'us': '(\d+ U\.S\. \d+)',
-                    'us_lexis': '(\d+ U\.S\. (App\. )?LEXIS \d+)',
-                    'a_2d': '(\d+ A\.\dd \d+)',
-                    'f_2d':'(\d+ F\.\dd \d+)',
-                    'roger': '\d+ R(\.|oger )W(\.|illiams )U\. ?L\. Rev. \d+',
-                    'cfr': '(\d+ CFR \d+\.\d+(?!\d+-))',
-                    'usc': '(\d+ U\.S\.C\.( \d{4})?)',
-                    'supp': '(\d+ F\. Supp\. \d+)',
-                    'us_dist_lexis': '((\d+ )?U\.S\. Dist\. LEXIS \d+)',
                     'R_42':'R42-35-PP',
                     'rir':'(R\.I\. R\. Evid\. \d+)',
-                    'A_269':'(\d+ A\. \d+)',
-                    'l_ed':'(\d+ L\. Ed\. \d+)',
-                    'br':'(\d+ B\.R\. \d+)',
                     'ricr':'(230-RICR-30-10-1)',
-                    'lp':'L\.P\.( v\. Tillson)?',
-                    'econ': 'R\.I\. Econ\. Dev\. Corp\. v\. Parking Co\.'
+                    'econ': '(R\.I\. Econ\. Dev\. Corp\. v\. Parking Co\.)',
+                    'gen_law':'(R\.I\. Gen\. Laws)',
+                    'airport_corp':'(R\.I\. Airport Corp\.)'
                 }
+
+
                 for key in cite_tag_pattern:
                     cite_pattern = cite_tag_pattern[key]
                     if re.search(cite_pattern, tag.text.strip()) :
