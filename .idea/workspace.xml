@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="71590542-efb7-4e5e-9c82-61a8ebd9ddfa" name="Changes" comment="">
+    <list default="true" id="71590542-efb7-4e5e-9c82-61a8ebd9ddfa" name="Changes" comment="initial">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/html_parser/ri_html_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/html_parser/ri_html_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/transforms/ri/ocri/r70/raw/gov.ri.code.title.13.html" beforeDir="false" afterPath="$PROJECT_DIR$/transforms/ri/ocri/r70/raw/gov.ri.code.title.13.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,8 +28,14 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/transforms/ri/ocri/r70/raw/gov.ri.code.title.18.html" root0="FORCE_HIGHLIGHTING" />
+  </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectId" id="2C6IH5z1mLfH9mvLxmsNRRlVUwn" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
@@ -42,7 +50,8 @@
     &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/mis/PycharmProjects/cic-beautify-state-codes/transforms/ri/ocri/r70/raw&quot;,
+    &quot;last.edited.regexp&quot;: &quot;Sample Text&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/mis/PycharmProjects/cic-code-ri-1&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
@@ -57,7 +66,7 @@
     </key>
   </component>
   <component name="RunManager" selected="Python.html_parse_runner">
-    <configuration name="html_parse_runner" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="html_parse_runner" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="cic-beautify-state-codes" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -70,7 +79,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/html_parser/html_parse_runner.py" />
-      <option name="PARAMETERS" value="--state_key RI --release_number 70 --release_date 2021.11" />
+      <option name="PARAMETERS" value="--state_key RI --release_number 70 --release_date 2021.11 --input_file_name gov.ri.code.title.13.html" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -103,12 +112,11 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.ri_html_parser" />
       <item itemvalue="Python.html_parse_runner" />
+      <item itemvalue="Python.ri_html_parser" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.html_parse_runner" />
         <item itemvalue="Python.html_parse_runner" />
         <item itemvalue="Python.html_parse_runner" />
       </list>
@@ -179,7 +187,21 @@
       <option name="project" value="LOCAL" />
       <updated>1660213622340</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="initial">
+      <created>1660240994548</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1660240994548</updated>
+    </task>
+    <task id="LOCAL-00010" summary="initial">
+      <created>1661404451451</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1661404451451</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

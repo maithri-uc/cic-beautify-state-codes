@@ -199,7 +199,6 @@ class RIParseHtml(ParserBase):
         count_for_cross_reference = 0
         for tag in self.soup.find_all("p"):
             class_name = tag['class'][0]
-
             if class_name == self.dictionary_to_store_class_name['h1']:
                 tag.name = "h1"
                 if re.search(r"^Title \d+[A-Z]?(\.\d+)?", tag.text.strip()):
@@ -227,7 +226,7 @@ class RIParseHtml(ParserBase):
                         'sub_part_number')
                     tag.attrs['id'] = f"{tag.find_previous_sibling('h2', class_='part').attrs['id']}sp{sub_part_number}"
                     tag['class'] = "sub_part"
-                elif re.search(r'^', tag.text.strip()):
+                elif re.search(r'^Article (\d+|[IVXCL]+)', tag.text.strip()):
                     tag.name = "h2"
                     article_id = re.search(r'^Article (?P<article_id>(\d+|[IVXCL]+))', tag.text.strip()).group(
                         'article_id')
@@ -323,33 +322,40 @@ class RIParseHtml(ParserBase):
                 elif re.search('The Interstate Compact on Juveniles', tag.text.strip()):
                     tag.name = "h4"
                     tag['id'] = f"{tag.find_previous_sibling(['h3', 'h2'], ['section', 'chapter', 'part', 'sub_part']).get('id')}-{re.sub(r'[^a-zA-Z0-9]', '', tag.text).lower()}"
-                elif re.search(r"^ARTICLE (\d+|[IVXCL]+)", tag.text.strip(), re.IGNORECASE):
-                    if re.search(r"^ARTICLE [IVXCL]+\.?[A-Z a-z]+", tag.text.strip(),
-                                 re.IGNORECASE) and tag.name != "li":  # article notes to decision
-                        tag, new_tag = self.recreate_tag(tag)
-                        new_tag.name = "h3"
-                        article_number = re.search('^(ARTICLE (?P<article_id>[IVXCL]+))',
-                                                   new_tag.text.strip(), re.IGNORECASE)
-                        new_tag.attrs['class'] = 'article_h3'
-                        new_tag['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
-
-                    elif re.search(r'^Article [IVXCL]+\.', tag.text.strip()):
-                        tag.name = 'li'
-                    elif re.search(r'^Article \d+\.', tag.text.strip()):
+                elif re.search("^ARTICLE (\d+|[IVXCL]+)", tag.text.strip(), re.IGNORECASE):
+                    if re.search("^ARTICLE [IVXCL]+\.?[A-Z a-z]+", tag.text.strip(), re.IGNORECASE) and tag.name!="li":#article notes to dceision
                         tag_for_article = self.soup.new_tag("h3")
-                        article_number = re.search(r'^(Article (?P<article_number>\d+)\.)', tag.text.strip())
+                        article_number=re.search('^(ARTICLE (?P<article_id>[IVXCL]+))', tag.text.strip(), re.IGNORECASE)
+                        tag_for_article.string = article_number.group()
+                        tag_text = tag.text.replace(f'{article_number.group()}', '')
+                        tag.insert_before(tag_for_article)
+                        tag.clear()
+                        tag.string = tag_text
+                        tag_for_article.attrs['class'] = [self.dictionary_to_store_class_name['History']]
+                        tag_for_article['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
+                    elif re.search('^Article [IVXCL]+\.[A-Z a-z]+', tag.text.strip()):
+                        tag.name="h3"
+                        article_number = re.search('^(Article (?P<article_id>[IVXCL]+))',tag.text.strip())
+                        tag['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
+                    elif re.search('^Article [IVXCL]+\.',tag.text.strip()):
+                        tag.name = 'li'
+                    elif re.search('^Article \d+\.',tag.text.strip()):
+                        tag_for_article = self.soup.new_tag("h3")
+                        article_number = re.search('^(Article (?P<article_number>\d+)\.)',tag.text.strip())
                         tag_for_article.string = article_number.group()
                         tag_text = tag.text.replace(f'{article_number.group()}', '')
                         tag.insert_before(tag_for_article)
                         tag.clear()
                         tag.string = tag_text
                         tag_for_article.attrs['class'] = 'article_h3'
+                        tag_for_article.attrs['class'] = [self.dictionary_to_store_class_name['History']]
                         tag_for_article['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_number')}"
                     else:
                         tag.name = "h3"
-                        article_id = re.search("^ARTICLE (?P<article_id>[IVXCL]+)", tag.text.strip(), re.IGNORECASE).group('article_id')
                         tag['class'] = 'article_h3'
+                        article_id = re.search("^ARTICLE (?P<article_id>[IVXCL]+)",tag.text.strip(), re.IGNORECASE).group('article_id')
                         tag['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_id}"
+
                 elif re.search(r"^Section \d+. [a-z ,\-A-Z]+\. \(a\)", tag.text.strip()) and re.search(r"^\(b\)", tag.find_next_sibling().text.strip()):
                     text_from_b = tag.text.split('(a)')
                     p_tag_for_section = self.soup.new_tag("p")
@@ -2065,8 +2071,7 @@ class RIParseHtml(ParserBase):
                             else:
                                 tag.name = "li"
                                 tag.string = re.sub(fr'^\({alphabet}{alphabet}?\)', '', tag.text.strip())
-                                tag[
-                                    'id'] = f"{tag.find_previous(['h4', 'h3'], ['schedule', 'comment', 'section', 'article_h3']).get('id')}ol{ol_count}{alpha_id}"
+                                tag['id'] = f"{tag.find_previous(['h4', 'h3'], ['schedule', 'comment', 'section', 'article_h3']).get('id')}ol{ol_count}{alpha_id}"
                                 tag.wrap(ol_tag_for_alphabet)
                                 if alphabet == "z":
                                     alphabet = 'a'
