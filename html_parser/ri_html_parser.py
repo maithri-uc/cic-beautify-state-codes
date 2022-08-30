@@ -199,6 +199,7 @@ class RIParseHtml(ParserBase):
         count_for_cross_reference = 0
         for tag in self.soup.find_all("p"):
             class_name = tag['class'][0]
+
             if class_name == self.dictionary_to_store_class_name['h1']:
                 tag.name = "h1"
                 if re.search(r"^Title \d+[A-Z]?(\.\d+)?", tag.text.strip()):
@@ -216,8 +217,7 @@ class RIParseHtml(ParserBase):
                     tag.attrs['class'] = "chapter"
                 elif re.search(r"^Part (\d{1,2}|[IVXCL]+)", tag.text.strip()):
                     tag.name = "h2"
-                    part_number = re.search(r"^Part (?P<part_number>\d{1,2}|[IVXCL]+)", tag.text.strip()).group(
-                        'part_number').zfill(2)
+                    part_number = re.search(r"^Part (?P<part_number>\d{1,2}|[IVXCL]+)", tag.text.strip()).group('part_number').zfill(2)
                     tag.attrs['id'] = f"{tag.find_previous_sibling('h2', ['article', 'chapter']).attrs['id']}p{part_number}"
                     tag['class'] = "part"
                 elif re.search('^Subpart [A-Z0-9]', tag.text.strip()):
@@ -322,40 +322,36 @@ class RIParseHtml(ParserBase):
                 elif re.search('The Interstate Compact on Juveniles', tag.text.strip()):
                     tag.name = "h4"
                     tag['id'] = f"{tag.find_previous_sibling(['h3', 'h2'], ['section', 'chapter', 'part', 'sub_part']).get('id')}-{re.sub(r'[^a-zA-Z0-9]', '', tag.text).lower()}"
-                elif re.search("^ARTICLE (\d+|[IVXCL]+)", tag.text.strip(), re.IGNORECASE):
-                    if re.search("^ARTICLE [IVXCL]+\.?[A-Z a-z]+", tag.text.strip(), re.IGNORECASE) and tag.name!="li":#article notes to dceision
+                elif re.search(r"^ARTICLE (\d+|[IVXCL]+)", tag.text.strip(), re.IGNORECASE):
+                    if re.search(r"^ARTICLE [IVXCL]+\.?[A-Z a-z]+", tag.text.strip(),
+                                 re.IGNORECASE) and tag.name != "li":  # article notes to decision
                         tag_for_article = self.soup.new_tag("h3")
-                        article_number=re.search('^(ARTICLE (?P<article_id>[IVXCL]+))', tag.text.strip(), re.IGNORECASE)
-                        tag_for_article.string = article_number.group()
-                        tag_text = tag.text.replace(f'{article_number.group()}', '')
+                        article_number = re.search('^(ARTICLE (?P<article_id>[IVXCL]+))', tag.text.strip(), re.IGNORECASE)
+                        tag_for_article.string = tag.b.text
+                        tag_text = re.sub(fr'{tag.b.text}', '', tag.text.strip())
                         tag.insert_before(tag_for_article)
                         tag.clear()
                         tag.string = tag_text
-                        tag_for_article.attrs['class'] = [self.dictionary_to_store_class_name['History']]
+                        tag_for_article.attrs['class'] = 'article_h3'
                         tag_for_article['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
-                    elif re.search('^Article [IVXCL]+\.[A-Z a-z]+', tag.text.strip()):
-                        tag.name="h3"
-                        article_number = re.search('^(Article (?P<article_id>[IVXCL]+))',tag.text.strip())
-                        tag['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_id')}"
-                    elif re.search('^Article [IVXCL]+\.',tag.text.strip()):
+
+                    elif re.search(r'^Article [IVXCL]+\.', tag.text.strip()):
                         tag.name = 'li'
-                    elif re.search('^Article \d+\.',tag.text.strip()):
+                    elif re.search(r'^Article \d+\.', tag.text.strip()):
                         tag_for_article = self.soup.new_tag("h3")
-                        article_number = re.search('^(Article (?P<article_number>\d+)\.)',tag.text.strip())
+                        article_number = re.search(r'^(Article (?P<article_number>\d+)\.)', tag.text.strip())
                         tag_for_article.string = article_number.group()
                         tag_text = tag.text.replace(f'{article_number.group()}', '')
                         tag.insert_before(tag_for_article)
                         tag.clear()
                         tag.string = tag_text
                         tag_for_article.attrs['class'] = 'article_h3'
-                        tag_for_article.attrs['class'] = [self.dictionary_to_store_class_name['History']]
                         tag_for_article['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_number.group('article_number')}"
                     else:
                         tag.name = "h3"
+                        article_id = re.search("^ARTICLE (?P<article_id>[IVXCL]+)", tag.text.strip(), re.IGNORECASE).group('article_id')
                         tag['class'] = 'article_h3'
-                        article_id = re.search("^ARTICLE (?P<article_id>[IVXCL]+)",tag.text.strip(), re.IGNORECASE).group('article_id')
                         tag['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}a{article_id}"
-
                 elif re.search(r"^Section \d+. [a-z ,\-A-Z]+\. \(a\)", tag.text.strip()) and re.search(r"^\(b\)", tag.find_next_sibling().text.strip()):
                     text_from_b = tag.text.split('(a)')
                     p_tag_for_section = self.soup.new_tag("p")
@@ -373,6 +369,7 @@ class RIParseHtml(ParserBase):
                     tag['class'] = 'schedule'
                     schedule_id = re.search('^Schedule (?P<schedule_id>[IVX]+)', tag.text.strip()).group('schedule_id')
                     tag.attrs['id'] = f"{tag.find_previous_sibling('h3', class_='section').attrs['id']}sec{schedule_id}"
+
             elif class_name == self.dictionary_to_store_class_name['li']:
                 if re.search(r"^Chapters? \d+(\.\d+)?(\.\d+)?([A-Z])?", tag.text.strip()) or re.search(
                         r"^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?(([A-Z])(-\d+)?)?(\.\d+(-\d+)?(\.\d+((\.\d+)?\.\d+)?)?(-\d+)?)?|^Chs\.\s*\d+\s*-\s*\d+\.",
@@ -391,9 +388,9 @@ class RIParseHtml(ParserBase):
         return li_tag
 
     def create_nav_and_ul_tag_for_constitution(self):
-        ul_tag = self.soup.new_tag("ul")
-        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
-        ul_tag_for_sub_section = self.soup.new_tag("ul")
+        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
+        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
+        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
         nav_tag = self.soup.new_tag("nav")
         li_count = 0
         count_for_duplicate = 0
@@ -422,11 +419,10 @@ class RIParseHtml(ParserBase):
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, h3_id, "snav", li_count)
                 next_tag = li_tag.find_next_sibling()
-                ul_tag.attrs['class'] = 'leaders'
                 li_tag.wrap(ul_tag)
                 if next_tag.name != "li":
                     ul_tag.wrap(nav_tag)
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     nav_tag = self.soup.new_tag("nav")
                     li_count = 0
             elif re.search('^Article [IVXCL]+|^Preamble|^Articles of Amendment',
@@ -446,11 +442,10 @@ class RIParseHtml(ParserBase):
                     h1_id = f"{li_tag.find_previous_sibling('h1').attrs['id']}-{article_id}"
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, h1_id, "cnav", li_count)
-                ul_tag.attrs['class'] = 'leaders'
                 next_tag = li_tag.find_next_sibling()
                 li_tag.wrap(ul_tag)
                 if next_tag.name != "li":
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     li_count = 0
             else:
                 h4_id = li_tag.find_previous_sibling("h4").attrs['id']
@@ -461,20 +456,19 @@ class RIParseHtml(ParserBase):
                     h5_id = f"{h4_id}-{id_of_parent}-{sub_section_id}"
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
                     li_tag['class'] = "notes_sub_section"
-                    ul_tag_for_sub_section['class'] = 'leaders'
                     if re.search('^— ?(—)?', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section)
                     elif li_tag.find_next_sibling().name != "li":
                         li_tag.wrap(ul_tag_for_sub_section)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     else:
                         li_tag.wrap(ul_tag_for_sub_section)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                 elif re.search('^— —', li_tag.text.strip()):
                     id_of_section = re.sub(r'[^a-zA-Z0-9]', '',
                                            ul_tag.find_all("li", class_="notes_to_decision")[-1].text).lower()
@@ -483,7 +477,6 @@ class RIParseHtml(ParserBase):
                                                    -1].text).lower()
                     h5_id = f"{h4_id}-{id_of_section}-{id_of_sub_section}-{sub_section_id}"
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
-                    ul_tag_for_sub_section_2.attrs['class'] = 'leaders'
                     if re.search('^— —', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section_2)
                     elif li_tag.find_next_sibling().name != "li":
@@ -491,23 +484,23 @@ class RIParseHtml(ParserBase):
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     elif re.search('^—(?! —)', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section_2)
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
                     else:
                         li_tag.wrap(ul_tag_for_sub_section_2)
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                 else:
                     h5_id = f"{h4_id}-{sub_section_id}"
                     if h5_id in self.list_store_anchor_reference:
@@ -517,20 +510,19 @@ class RIParseHtml(ParserBase):
                     else:
                         count_for_duplicate = 0
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
-                    ul_tag.attrs['class'] = 'leaders'
                     li_tag['class'] = 'notes_to_decision'
                     if li_tag.find_next_sibling().name != "li":
                         li_tag.wrap(ul_tag)
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     else:
                         li_tag.wrap(ul_tag)
 
     def create_nav_and_ul_tag(self):
-        ul_tag = self.soup.new_tag("ul")
-        ul_tag_for_sub_section = self.soup.new_tag("ul")
-        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
+        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
+        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
+        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
         li_count = 0
         count_for_duplicate = 0
         nav_tag = self.soup.new_tag("nav")
@@ -542,11 +534,10 @@ class RIParseHtml(ParserBase):
                 h1_id = f"{li_tag.find_previous_sibling('h1').attrs['id']}c{chapter_number}"
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, h1_id, "cnav", li_count)
-                ul_tag.attrs['class'] = 'leaders'
                 next_tag = li_tag.find_next_sibling()
                 li_tag.wrap(ul_tag)
                 if next_tag.name != "li":
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     li_count = 0
             elif re.search(
                     r"^\d+[A-Z]?(\.\d+)?-\d+(-\d+)?(([A-Z])(-\d+)?)?(\.\d+(-\d+)?(\.\d+((\.\d+)?\.\d+)?)?(-\d+)?)?|^Chs\.\s*\d+\s*-\s*\d+\.|^Article (\d+|[IVXCL]+) ",
@@ -576,11 +567,10 @@ class RIParseHtml(ParserBase):
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, h3_id, "snav", li_count)
                 next_tag = li_tag.find_next_sibling()
-                ul_tag.attrs['class'] = 'leaders'
                 li_tag.wrap(ul_tag)
                 if next_tag.name != "li":
                     ul_tag.wrap(nav_tag)
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     nav_tag = self.soup.new_tag("nav")
                     li_count = 0
             elif re.search(r"^Part (\d{1,2}|[IVXCL]+) ", li_tag.text.strip()):
@@ -590,11 +580,11 @@ class RIParseHtml(ParserBase):
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, f"{h2_id}p{part_id}", "snav", li_count)
                 next_tag = li_tag.find_next_sibling()
-                ul_tag.attrs['class'] = 'leaders'
+
                 if next_tag.name != "li":
                     li_tag.wrap(ul_tag)
                     ul_tag.wrap(nav_tag)
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     nav_tag = self.soup.new_tag("nav")
                     li_count = 0
                 else:
@@ -606,11 +596,10 @@ class RIParseHtml(ParserBase):
                 li_count += 1
                 li_tag = self.create_li_with_anchor(li_tag, f"{h2_id}sp{sub_part_id}", "snav", li_count)
                 next_tag = li_tag.find_next_sibling()
-                ul_tag.attrs['class'] = 'leaders'
                 if next_tag.name != "li":
                     li_tag.wrap(ul_tag)
                     ul_tag.wrap(nav_tag)
-                    ul_tag = self.soup.new_tag("ul")
+                    ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                     nav_tag = self.soup.new_tag("nav")
                     li_count = 0
                 else:
@@ -624,21 +613,19 @@ class RIParseHtml(ParserBase):
                     h5_id = f"{h4_id}-{id_of_parent}-{sub_section_id}"
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
                     li_tag['class'] = "notes_sub_section"
-                    ul_tag_for_sub_section['class'] = 'leaders'
-
                     if re.search('^— ?(—)?', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section)
                     elif li_tag.find_next_sibling().name != "li":
                         li_tag.wrap(ul_tag_for_sub_section)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     else:
                         li_tag.wrap(ul_tag_for_sub_section)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                 elif re.search('^— —', li_tag.text.strip()):
                     id_of_section = re.sub(r'[^a-zA-Z0-9]', '',
                                            ul_tag.find_all("li", class_="notes_to_decision")[-1].text).lower()
@@ -647,7 +634,6 @@ class RIParseHtml(ParserBase):
                                                    -1].text).lower()
                     h5_id = f"{h4_id}-{id_of_section}-{id_of_sub_section}-{sub_section_id}"
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
-                    ul_tag_for_sub_section_2.attrs['class'] = 'leaders'
                     if re.search('^— —', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section_2)
                     elif li_tag.find_next_sibling().name != "li":
@@ -655,24 +641,24 @@ class RIParseHtml(ParserBase):
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     elif re.search('^—(?! —)', li_tag.find_next_sibling().text.strip()):
                         li_tag.wrap(ul_tag_for_sub_section_2)
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
 
                     else:
                         li_tag.wrap(ul_tag_for_sub_section_2)
                         ul_tag_for_sub_section.find_all("li", class_="notes_sub_section")[-1].append(
                             ul_tag_for_sub_section_2)
                         ul_tag.find_all("li", class_="notes_to_decision")[-1].append(ul_tag_for_sub_section)
-                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul")
-                        ul_tag_for_sub_section = self.soup.new_tag("ul")
+                        ul_tag_for_sub_section_2 = self.soup.new_tag("ul", **{"class": "leaders"})
+                        ul_tag_for_sub_section = self.soup.new_tag("ul", **{"class": "leaders"})
                 else:
                     h5_id = f"{h4_id}-{sub_section_id}"
                     if h5_id in self.list_store_anchor_reference:
@@ -683,11 +669,10 @@ class RIParseHtml(ParserBase):
                         count_for_duplicate = 0
                     li_tag = self.create_li_with_anchor(li_tag, h5_id)
                     li_tag['class'] = 'notes_to_decision'
-                    ul_tag['class'] = 'leaders'
                     if li_tag.find_next_sibling().name != "li":
                         li_tag.wrap(ul_tag)
                         ul_tag.wrap(nav_tag)
-                        ul_tag = self.soup.new_tag("ul")
+                        ul_tag = self.soup.new_tag("ul", **{"class": "leaders"})
                         nav_tag = self.soup.new_tag("nav")
                     else:
                         li_tag.wrap(ul_tag)
@@ -774,8 +759,7 @@ class RIParseHtml(ParserBase):
                     tag.string = re.sub(fr'^{number}\.', '', tag.text.strip())
                     tag['class'] = "number"
                     if ol_tag_for_caps_alphabet.li:
-                        tag[
-                            'id'] = f"{ol_tag_for_caps_alphabet.find_all('li', class_='caps_alpha')[-1].attrs['id']}{number}"
+                        tag['id'] = f"{ol_tag_for_caps_alphabet.find_all('li', class_='caps_alpha')[-1].attrs['id']}{number}"
                     elif ol_tag_for_alphabet.li:
                         tag['id'] = f"{ol_tag_for_alphabet.find_all('li', class_='alphabet')[-1].attrs['id']}{number}"
                     else:
@@ -860,8 +844,7 @@ class RIParseHtml(ParserBase):
                     tag.string = re.sub(fr'^{inner_alphabet}\.', '', tag.text.strip())
                     tag['class'] = "inner_alpha"
                     if ol_tag_for_number.li:
-                        tag[
-                            'id'] = f'{ol_tag_for_number.find_all("li", class_="number")[-1].attrs["id"]}{inner_alphabet}'
+                        tag['id'] = f'{ol_tag_for_number.find_all("li", class_="number")[-1].attrs["id"]}{inner_alphabet}'
                     tag.wrap(ol_tag_for_inner_alphabet)
                     inner_alphabet = chr(ord(inner_alphabet) + 1)
                     while (next_tag.name != "h2" and next_tag.name != "h4" and next_tag.name != "h3") and (
@@ -895,14 +878,11 @@ class RIParseHtml(ParserBase):
                                 '', tag.text.strip())
                             tag.wrap(ol_tag_for_inner_alphabet)
                             li_tag_for_caps_alpha = self.soup.new_tag("li")
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+                            li_tag_for_caps_alpha['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
                             li_tag_for_caps_roman = self.soup.new_tag("li")
-                            li_tag_for_caps_roman[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
+                            li_tag_for_caps_roman['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
                             li_tag_for_caps_alpha['class'] = "caps_alpha"
-                            tag.attrs[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}{inner_alphabet}"
+                            tag.attrs['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}{inner_alphabet}"
                             tag['class'] = "inner_alpha"
                             li_tag_for_caps_roman['class'] = "caps_roman"
                             li_tag_for_caps_roman.append(ol_tag_for_inner_alphabet)
@@ -927,15 +907,11 @@ class RIParseHtml(ParserBase):
                             tag.wrap(ol_tag_for_caps_roman)
                             li_tag_for_caps_alpha = self.soup.new_tag("li")
                             if ol_tag_for_roman.li:
-                                li_tag_for_caps_alpha[
-                                    'id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}"
-                                tag.attrs[
-                                    'id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
+                                li_tag_for_caps_alpha['id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}"
+                                tag.attrs['id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
                             else:
-                                li_tag_for_caps_alpha[
-                                    'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
-                                tag.attrs[
-                                    'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
+                                li_tag_for_caps_alpha['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+                                tag.attrs['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{caps_roman}"
                             li_tag_for_caps_alpha['class'] = "caps_alpha"
                             tag['class'] = "caps_roman"
                             li_tag_for_caps_alpha.append(ol_tag_for_caps_roman)
@@ -955,15 +931,11 @@ class RIParseHtml(ParserBase):
                         tag.wrap(ol_tag_for_inner_number)
                         li_tag_for_caps_alpha = self.soup.new_tag("li")
                         if ol_tag_for_roman.li:
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}"
-                            tag.attrs[
-                                'id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}{inner_num}"
+                            li_tag_for_caps_alpha['id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}"
+                            tag.attrs['id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}{inner_num}"
                         else:
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
-                            tag.attrs[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}{inner_num}"
+                            li_tag_for_caps_alpha['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+                            tag.attrs['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}{inner_num}"
                         li_tag_for_caps_alpha['class'] = "caps_alpha"
                         tag['class'] = "inner_num"
                         li_tag_for_caps_alpha.append(ol_tag_for_inner_number)
@@ -989,15 +961,11 @@ class RIParseHtml(ParserBase):
                         tag.wrap(ol_tag_for_inner_roman)
                         li_tag_for_caps_alpha = self.soup.new_tag("li")
                         if ol_tag_for_number.li:
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
-                            tag.attrs[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{inner_roman}"
+                            li_tag_for_caps_alpha['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+                            tag.attrs['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{inner_roman}"
                         else:
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{tag.find_previous({'h5', 'h4', 'h3'}).get('id')}ol{ol_count}-{caps_alpha_id}"
-                            tag[
-                                'id'] = f"{tag.find_previous({'h5', 'h4', 'h3'}).get('id')}ol{ol_count}-{caps_alpha_id}-{inner_roman}"
+                            li_tag_for_caps_alpha['id'] = f"{tag.find_previous({'h5', 'h4', 'h3'}).get('id')}ol{ol_count}-{caps_alpha_id}"
+                            tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3'}).get('id')}ol{ol_count}-{caps_alpha_id}-{inner_roman}"
                         li_tag_for_caps_alpha['class'] = "caps_alpha"
                         tag['class'] = "inner_roman"
                         li_tag_for_caps_alpha.append(ol_tag_for_inner_roman)
@@ -1017,10 +985,8 @@ class RIParseHtml(ParserBase):
                         tag.wrap(ol_tag_for_roman)
                         li_tag_for_caps_alpha = self.soup.new_tag("li")
                         if ol_tag_for_number.li:
-                            li_tag_for_caps_alpha[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
-                            tag.attrs[
-                                'id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{roman_number}"
+                            li_tag_for_caps_alpha['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+                            tag.attrs['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}-{roman_number}"
                         li_tag_for_caps_alpha['class'] = "caps_alpha"
                         tag['class'] = "roman"
                         li_tag_for_caps_alpha.append(ol_tag_for_roman)
@@ -1194,7 +1160,6 @@ class RIParseHtml(ParserBase):
                                     ol_tag_for_inner_caps_roman = self.soup.new_tag("ol", type="I")
                                     inner_caps_roman = 'I'
                         else:
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
                             tag.name = "li"
                             caps_alpha_id = re.search(fr'^\((?P<caps_alpha_id>{caps_alpha}{caps_alpha}?)\)',
                                                       tag.text.strip()).group('caps_alpha_id')
@@ -1202,12 +1167,14 @@ class RIParseHtml(ParserBase):
                             tag['class'] = "caps_alpha"
                             tag.wrap(ol_tag_for_caps_alphabet)
                             if ol_tag_for_roman.li:
-                                id_of_last_li = ol_tag_for_roman.find_all("li", class_="roman")[-1].attrs['id']
+                                tag['id'] = f"{ol_tag_for_roman.find_all('li', class_='roman')[-1].attrs['id']}-{caps_alpha_id}"
+
                             elif ol_tag_for_number.li:
-                                id_of_last_li = ol_tag_for_number.find_all("li", class_="number")[-1].attrs['id']
+                                tag['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{caps_alpha_id}"
+
                             else:
-                                id_of_last_li = h3_id
-                            tag['id'] = f"{id_of_last_li}-{caps_alpha_id}"
+                                tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}-{caps_alpha_id}"
+
                             if caps_alpha == "Z":
                                 caps_alpha = 'A'
                             else:
@@ -1226,7 +1193,7 @@ class RIParseHtml(ParserBase):
                                 elif re.search(r'^\([A-Z]+\)', next_tag.text.strip()):
                                     caps_id = re.search(r'^\((?P<caps_id>[A-Z]+)\)', next_tag.text.strip()).group(
                                         'caps_id')
-                                    if caps_id[0] != caps_alpha and caps_id[0] != caps_roman and caps_id[0] != inner_caps_roman:
+                                    if caps_id[0] != caps_alpha and caps_id != caps_roman and caps_id != inner_caps_roman:
                                         next_tag, count_of_p_tag = self.add_p_tag_to_li(tag, next_tag, count_of_p_tag)
                                     else:
                                         break
@@ -1708,7 +1675,7 @@ class RIParseHtml(ParserBase):
                             ol_tag_for_inner_roman = self.soup.new_tag("ol", type="i")
                             inner_roman = "i"
                     else:
-                        h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                         tag.name = "li"
                         tag.string = re.sub(fr'^\({roman_number}\)', '', tag.text.strip())
                         if ol_tag_for_roman.li:
@@ -1717,17 +1684,20 @@ class RIParseHtml(ParserBase):
                             tag.wrap(ol_tag_for_roman)
                         tag['class'] = "roman"
                         if ol_tag_for_inner_alphabet.li:
-                            id_of_last_li = ol_tag_for_inner_alphabet.find_all("li", class_="inner_alpha")[-1].attrs[
-                                'id']
+                            tag['id'] = f"{ol_tag_for_inner_alphabet.find_all('li', class_='inner_alpha')[-1].attrs['id']}-{roman_number}"
+
                         elif ol_tag_for_caps_roman.li:
-                            id_of_last_li = ol_tag_for_caps_roman.find_all("li", class_="caps_roman")[-1].attrs['id']
+                            tag['id'] = f"{ol_tag_for_caps_roman.find_all('li', class_='caps_roman')[-1].attrs['id']}-{roman_number}"
+
                         elif ol_tag_for_number.li:
-                            id_of_last_li = ol_tag_for_number.find_all("li", class_="number")[-1].attrs['id']
+                            tag['id'] = f"{ol_tag_for_number.find_all('li', class_='number')[-1].attrs['id']}-{roman_number}"
+
                         elif ol_tag_for_alphabet.li:
-                            id_of_last_li = ol_tag_for_alphabet.find_all("li", class_="alphabet")[-1].attrs['id']
+                            tag['id'] = f"{ol_tag_for_alphabet.find_all('li', class_='alphabet')[-1].attrs['id']}-{roman_number}"
+
                         else:
-                            id_of_last_li = h3_id
-                        tag['id'] = f"{id_of_last_li}-{roman_number}"
+                            tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}-{roman_number}"
+
                         roman_number = roman.fromRoman(roman_number.upper())
                         roman_number += 1
                         roman_number = roman.toRoman(roman_number).lower()
@@ -1752,7 +1722,7 @@ class RIParseHtml(ParserBase):
                                 elif re.search(r"^\([A-Z]+\)", next_tag.text.strip()):
                                     alpha_id = re.search(r"^\((?P<alpha_id>[A-Z]+)\)", next_tag.text.strip()).group(
                                         'alpha_id')
-                                    if alpha_id[0] != caps_alpha and alpha_id[0] != caps_roman and alpha_id[0] != inner_caps_roman:
+                                    if alpha_id[0] != caps_alpha and alpha_id != caps_roman and alpha_id != inner_caps_roman:
                                         next_tag, count_of_p_tag = self.add_p_tag_to_li(tag, next_tag, count_of_p_tag)
                                     else:
                                         break
@@ -1847,22 +1817,22 @@ class RIParseHtml(ParserBase):
                         inner_roman != "ii" and roman_number != "ii"):
                     if re.search(fr'^\({alphabet}{alphabet}?\) \({number}\)', tag.text.strip()):
                         if re.search(fr'^\({alphabet}{alphabet}?\) \({number}\) \({roman_number}\)', tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({alphabet}{alphabet}?\) \({number}\) \({roman_number}\)', '',
                                                 tag.text.strip())
                             tag.wrap(ol_tag_for_roman)
                             li_tag_for_alphabet = self.soup.new_tag("li")
-                            li_tag_for_alphabet['id'] = f"{h3_id}ol{ol_count}{alphabet}"
+                            li_tag_for_alphabet['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}"
                             li_tag_for_alphabet['class'] = "alphabet"
                             li_tag_for_number = self.soup.new_tag("li")
-                            li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}"
+                            li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}"
                             li_tag_for_number['class'] = "number"
                             li_tag_for_number.append(ol_tag_for_roman)
                             ol_tag_for_number.append(li_tag_for_number)
                             li_tag_for_alphabet.append(ol_tag_for_number)
                             ol_tag_for_alphabet.append(li_tag_for_alphabet)
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}-{roman_number}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}-{roman_number}"
                             tag['class'] = "roman"
                             number += 1
                             alphabet = chr(ord(alphabet) + 1)
@@ -1875,22 +1845,22 @@ class RIParseHtml(ParserBase):
                             count_of_p_tag = 1
                         elif re.search(fr'^\({alphabet}{alphabet}?\) \({number}\) \({inner_alphabet}\)',
                                        tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({alphabet}{alphabet}?\) \({number}\) \({inner_alphabet}\)', '',
                                                 tag.text.strip())
                             tag.wrap(ol_tag_for_inner_alphabet)
                             li_tag_for_alphabet = self.soup.new_tag("li")
-                            li_tag_for_alphabet['id'] = f"{h3_id}ol{ol_count}{alphabet}"
+                            li_tag_for_alphabet['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}"
                             li_tag_for_alphabet['class'] = "alphabet"
                             li_tag_for_number = self.soup.new_tag("li")
-                            li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}"
+                            li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}"
                             li_tag_for_number['class'] = "number"
                             li_tag_for_number.append(ol_tag_for_inner_alphabet)
                             ol_tag_for_number.append(li_tag_for_number)
                             li_tag_for_alphabet.append(ol_tag_for_number)
                             ol_tag_for_alphabet.append(li_tag_for_alphabet)
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}-{inner_alphabet}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}-{inner_alphabet}"
                             tag['class'] = "inner_alpha"
                             number += 1
                             alphabet = chr(ord(alphabet) + 1)
@@ -1901,23 +1871,23 @@ class RIParseHtml(ParserBase):
                             count_of_p_tag = 1
                         elif re.search(fr'^\({alphabet}{alphabet}?\) \({number}\) \({caps_alpha}{caps_alpha}?\)',
                                        tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(
                                 fr'^\({alphabet}{alphabet}?\) \({number}\) \({caps_alpha}{caps_alpha}?\)', '',
                                 tag.text.strip())
                             tag.wrap(ol_tag_for_caps_alphabet)
                             li_tag_for_alphabet = self.soup.new_tag("li")
-                            li_tag_for_alphabet['id'] = f"{h3_id}ol{ol_count}{alphabet}"
+                            li_tag_for_alphabet['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}"
                             li_tag_for_alphabet['class'] = "alphabet"
                             li_tag_for_number = self.soup.new_tag("li")
-                            li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}"
+                            li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}"
                             li_tag_for_number['class'] = "number"
                             li_tag_for_number.append(ol_tag_for_caps_alphabet)
                             ol_tag_for_number.append(li_tag_for_number)
                             li_tag_for_alphabet.append(ol_tag_for_number)
                             ol_tag_for_alphabet.append(li_tag_for_alphabet)
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{alphabet}{number}-{caps_alpha}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}{number}-{caps_alpha}"
                             tag['class'] = "caps_alpha"
                             number += 1
                             alphabet = chr(ord(alphabet) + 1)
@@ -1929,15 +1899,15 @@ class RIParseHtml(ParserBase):
                         else:
                             alpha_id = re.search(fr'^\((?P<alpha_id>{alphabet}{alphabet}?)\)', tag.text.strip()).group(
                                 'alpha_id')
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({alphabet}{alphabet}?\) \({number}\)', '', tag.text.strip())
                             tag.wrap(ol_tag_for_number)
                             li_tag = self.soup.new_tag("li")
-                            li_tag['id'] = f"{h3_id}ol{ol_count}{alpha_id}"
+                            li_tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alpha_id}"
                             li_tag['class'] = "alphabet"
                             ol_tag_for_number.wrap(li_tag)
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{alpha_id}{number}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alpha_id}{number}"
                             tag['class'] = "number"
                             li_tag.wrap(ol_tag_for_alphabet)
                             number += 1
@@ -1956,15 +1926,15 @@ class RIParseHtml(ParserBase):
                                 number = 1
                     elif re.search(fr'^\({alphabet}{alphabet}?\) \({roman_number}\)',
                                    tag.text.strip()) and not ol_tag_for_number.li:
-                        h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                         tag.name = "li"
                         tag.string = re.sub(fr'^\({alphabet}{alphabet}?\) \({roman_number}\)', '', tag.text.strip())
                         tag.wrap(ol_tag_for_roman)
                         li_tag = self.soup.new_tag("li")
-                        li_tag['id'] = f"{h3_id}ol{ol_count}{alphabet}"
+                        li_tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}"
                         li_tag['class'] = "alphabet"
                         ol_tag_for_roman.wrap(li_tag)
-                        tag.attrs['id'] = f"{h3_id}ol{ol_count}{alphabet}-{roman_number}"
+                        tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{alphabet}-{roman_number}"
                         tag['class'] = "roman"
                         if ol_tag_for_alphabet.li:
                             ol_tag_for_alphabet.append(li_tag)
@@ -2071,7 +2041,8 @@ class RIParseHtml(ParserBase):
                             else:
                                 tag.name = "li"
                                 tag.string = re.sub(fr'^\({alphabet}{alphabet}?\)', '', tag.text.strip())
-                                tag['id'] = f"{tag.find_previous(['h4', 'h3'], ['schedule', 'comment', 'section', 'article_h3']).get('id')}ol{ol_count}{alpha_id}"
+                                tag[
+                                    'id'] = f"{tag.find_previous(['h4', 'h3'], ['schedule', 'comment', 'section', 'article_h3']).get('id')}ol{ol_count}{alpha_id}"
                                 tag.wrap(ol_tag_for_alphabet)
                                 if alphabet == "z":
                                     alphabet = 'a'
@@ -2328,22 +2299,22 @@ class RIParseHtml(ParserBase):
                                 inner_alphabet = 'a'
                 elif re.search(fr'^\({number}\)|^\({inner_num}\)', tag.text.strip()):
                     if re.search(fr'^\({number}\) \({inner_alphabet}\) \({roman_number}\)', tag.text.strip()):
-                        h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                         tag.name = "li"
                         tag.string = re.sub(fr'^\({number}\) \({alphabet}{alphabet}?\) \({roman_number}\)', '',
                                             tag.text.strip())
                         tag.wrap(ol_tag_for_roman)
                         li_tag_for_number = self.soup.new_tag("li")
-                        li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{number}"
+                        li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}"
                         li_tag_for_number['class'] = "number"
                         li_tag_for_inner_alphabet = self.soup.new_tag("li")
-                        li_tag_for_inner_alphabet['id'] = f"{h3_id}ol{ol_count}{number}{inner_alphabet}"
+                        li_tag_for_inner_alphabet['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}{inner_alphabet}"
                         li_tag_for_inner_alphabet['class'] = "inner_alpha"
                         ol_tag_for_roman.wrap(li_tag_for_inner_alphabet)
                         li_tag_for_inner_alphabet.wrap(ol_tag_for_inner_alphabet)
                         ol_tag_for_inner_alphabet.wrap(li_tag_for_number)
                         li_tag_for_number.wrap(ol_tag_for_number)
-                        tag.attrs['id'] = f"{h3_id}ol{ol_count}{number}{inner_alphabet}-{roman_number}"
+                        tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}{inner_alphabet}-{roman_number}"
                         tag['class'] = "roman"
                         number += 1
                         inner_alphabet = chr(ord(inner_alphabet) + 1)
@@ -2353,7 +2324,7 @@ class RIParseHtml(ParserBase):
                     elif re.search(fr'^\({number}\) \({roman_number}\)', tag.text.strip()):
                         if re.search(fr'^\({number}\) \({roman_number}\) \({caps_alpha}{caps_alpha}?\)',
                                      tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             caps_alpha_id = re.search(fr'\((?P<caps_alpha_id>{caps_alpha}{caps_alpha}?)\)',
                                                       tag.text.strip()).group('caps_alpha_id')
                             tag.name = "li"
@@ -2362,11 +2333,11 @@ class RIParseHtml(ParserBase):
                             tag.wrap(ol_tag_for_caps_alphabet)
                             tag['class'] = "caps_alpha"
                             li_tag_for_number = self.soup.new_tag("li")
-                            li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{number}"
+                            li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}"
                             li_tag_for_roman = self.soup.new_tag("li")
-                            li_tag_for_roman['id'] = f"{h3_id}ol{ol_count}{number}-{roman_number}"
+                            li_tag_for_roman['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}-{roman_number}"
                             li_tag_for_number['class'] = "number"
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{number}-{roman_number}-{caps_alpha_id}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}-{roman_number}-{caps_alpha_id}"
                             li_tag_for_roman['class'] = "roman"
                             li_tag_for_roman.append(ol_tag_for_caps_alphabet)
                             ol_tag_for_roman.append(li_tag_for_roman)
@@ -2381,7 +2352,7 @@ class RIParseHtml(ParserBase):
                             else:
                                 caps_alpha = chr(ord(caps_alpha) + 1)
                         else:
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({number}\) \({roman_number}\)', '', tag.text.strip())
                             tag.wrap(ol_tag_for_roman)
@@ -2394,8 +2365,8 @@ class RIParseHtml(ParserBase):
                                 li_tag[
                                     'id'] = f"{ol_tag_for_alphabet.find_all('li', class_='alphabet')[-1].attrs['id']}{number}"
                             else:
-                                tag.attrs['id'] = f"{h3_id}ol{ol_count}{number}-{roman_number}"
-                                li_tag['id'] = f"{h3_id}ol{ol_count}{number}"
+                                tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}-{roman_number}"
+                                li_tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}"
                             roman_number = roman.fromRoman(roman_number.upper())
                             roman_number += 1
                             roman_number = roman.toRoman(roman_number).lower()
@@ -2427,18 +2398,18 @@ class RIParseHtml(ParserBase):
                                 roman_number = "i"
                     elif re.search(fr'^\({number}\) \({inner_alphabet}\)', tag.text.strip()):
                         if re.search(fr'^\({number}\) \({inner_alphabet}\) \({roman_number}\)', tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({number}\) \({inner_alphabet}\) \({roman_number}\)', '',
                                                 tag.text.strip())
                             tag.wrap(ol_tag_for_roman)
                             li_tag_for_number = self.soup.new_tag("li")
-                            li_tag_for_number['id'] = f"{h3_id}ol{ol_count}{number}"
+                            li_tag_for_number['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}"
                             li_tag_for_number['class'] = "number"
                             li_tag_for_inner_alphabet = self.soup.new_tag("li")
-                            li_tag_for_inner_alphabet['id'] = f"{h3_id}ol{ol_count}{number}{inner_alphabet}"
+                            li_tag_for_inner_alphabet['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}{inner_alphabet}"
                             li_tag_for_inner_alphabet['class'] = "inner_alpha"
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{number}{inner_alphabet}-{roman_number}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}{inner_alphabet}-{roman_number}"
                             li_tag_for_inner_alphabet.append(ol_tag_for_roman)
                             ol_tag_for_inner_alphabet.append(li_tag_for_inner_alphabet)
                             li_tag_for_number.append(ol_tag_for_inner_alphabet)
@@ -2449,15 +2420,15 @@ class RIParseHtml(ParserBase):
                             roman_number = roman.toRoman(roman_number).lower()
                             inner_alphabet = chr(ord(inner_alphabet) + 1)
                         elif re.search(fr'^\({number}\) \({inner_alphabet}\)', tag.text.strip()):
-                            h3_id = tag.find_previous_sibling("h3").attrs['id']
+
                             tag.name = "li"
                             tag.string = re.sub(fr'^\({number}\) \({inner_alphabet}\)', '', tag.text.strip())
                             tag.wrap(ol_tag_for_inner_alphabet)
                             li_tag = self.soup.new_tag("li")
-                            li_tag['id'] = f"{h3_id}ol{ol_count}{number}"
+                            li_tag['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}"
                             li_tag['class'] = "number"
                             li_tag.append(ol_tag_for_inner_alphabet)
-                            tag.attrs['id'] = f"{h3_id}ol{ol_count}{number}{inner_alphabet}"
+                            tag.attrs['id'] = f"{tag.find_previous({'h5', 'h4', 'h3', }).get('id')}ol{ol_count}{number}{inner_alphabet}"
                             tag['class'] = "inner_alpha"
                             inner_alphabet = chr(ord(inner_alphabet) + 1)
                             ol_tag_for_number.append(li_tag)
@@ -2516,18 +2487,18 @@ class RIParseHtml(ParserBase):
                             tag.wrap(ol_tag_for_number)
                         number += 1
                         while next_tag.name != "h4" and next_tag.name != "h5" and next_tag.name != "h3" and (re.search(
-                                r"^\([A-Z a-z]+\)\.”|^\. \. \.|^\[See .*]|^“?[a-z A-Z]+|^_______________|^\((ix|iv|v?i{0,3})\)|^\([0-9]\)|^\([a-z]+\)|^\([A-Z ]+\)",
+                                r"^\([A-Z a-z]+\)\.”|^“\([A-Z a-z]+\)|^\. \. \.|^\[See .*]|^“?[a-z A-Z]+|^_______________|^\((ix|iv|v?i{0,3})\)|^\([0-9]\)|^\([a-z]+\)|^\([A-Z ]+\)",
                                 next_tag.text.strip()) or (
                                                                                                                      next_tag.next_element and next_tag.next_element.name == "br")):
                             if next_tag.next_element.name == "br":
                                 next_tag = self.decompose_break_tag(next_tag)
                             elif re.search(
-                                    r"^\([A-Z a-z]+\)\.”|^_______________|^\. \. \.|^\([a-z]+\)|^“?[a-z A-Z]+|^\[See .*]|^\([0-9]+\)|^\((ix|iv|v?i{0,3})\)|^\([A-Z ]+\) ",
+                                    r"^\([A-Z a-z]+\)\.”|^“\([A-Z a-z]+\)|^_______________|^\. \. \.|^\([a-z]+\)|^“?[a-z A-Z]+|^\[See .*]|^\([0-9]+\)|^\((ix|iv|v?i{0,3})\)|^\([A-Z ]+\) ",
                                     next_tag.text.strip()):
                                 if re.search(r'^Section \d+', next_tag.text.strip()):
                                     break
                                 elif re.search(
-                                        r"^\([A-Z a-z]+\)\.”|^_______________|^\. \. \.|^\[See .*]|^“?[a-z A-Z]+",
+                                        r"^\([A-Z a-z]+\)\.”|^“\([A-Z a-z]+\)|^_______________|^\. \. \.|^\[See .*]|^“?[a-z A-Z]+",
                                         next_tag.text.strip()):
                                     next_tag, count_of_p_tag = self.add_p_tag_to_li(tag, next_tag, count_of_p_tag)
                                 elif re.search(r'^\([0-9]+\)', next_tag.text.strip()):
@@ -2866,9 +2837,9 @@ class RIParseHtml(ParserBase):
                         else:
                             title_id = f"{section_match.group('title_id').zfill(2)}"
                         if exists(
-                                f"../../cic-code-ri-1/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{title_id}.html"):
+                                f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{title_id}.html"):
                             file = open(
-                                f"../../cic-code-ri-1/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{title_id}.html")
+                                f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/gov.ri.code.title.{title_id}.html")
                             content = file.read()
                             file.close()
                         else:
@@ -3899,7 +3870,7 @@ class RIParseHtml(ParserBase):
         soup_text = soup_text.replace('/>', ' />')
 
         soup_text = re.sub('&(!?amp;)', '&amp;', soup_text)
-        with open(f"../../cic-code-ri-1/transforms/ri/ocri/r{self.release_number}/{self.html_file}", "w") as file:
+        with open(f"../../cic-code-ri/transforms/ri/ocri/r{self.release_number}/{self.html_file}", "w") as file:
             file.write(soup_text)
         file.close()
 
